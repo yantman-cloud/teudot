@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="תעודות משלוח" />
+  <title>תעודות משלוח</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --blue: #1A6FC4;
+      --blue-light: #EBF3FC;
+      --blue-dark: #1258A0;
+      --gray: #6B7280;
+      --gray-light: #F3F4F6;
+      --border: #E5E7EB;
+      --text: #111827;
+      --white: #FFFFFF;
+      --red: #DC2626;
+      --green: #16A34A;
+      --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #F0F4F8;
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    /* HEADER */
+    .header {
+      background: var(--blue);
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(26,111,196,0.3);
+    }
+    .header h1 { font-size: 18px; font-weight: 700; }
+    .header-note { font-size: 12px; opacity: 0.8; }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      background: white;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 57px;
+      z-index: 99;
+    }
+    .tab {
+      flex: 1;
+      padding: 13px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+    /* SCREENS */
+    .screen { display: none; padding: 16px; }
+    .screen.active { display: block; }
+
+    /* CARD */
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    /* FORM */
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 13px; font-weight: 600; color: var(--gray); margin-bottom: 6px; }
+    .field input, .field textarea {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--gray-light);
+      transition: border-color 0.2s, background 0.2s;
+      -webkit-appearance: none;
+    }
+    .field input:focus, .field textarea:focus {
+      outline: none;
+      border-color: var(--blue);
+      background: white;
+    }
+
+    /* NOTE NUMBER */
+    .note-number-display {
+      background: var(--blue-light);
+      border: 1.5px solid var(--blue);
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--blue);
+      text-align: center;
+    }
+
+    /* ITEMS TABLE */
+    .items-header {
+      display: grid;
+      grid-template-columns: 1fr 80px 36px;
+      gap: 8px;
+      padding: 0 0 8px 0;
+      border-bottom: 1.5px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .items-header span { font-size: 12px; font-weight: 700; color: var(--gray); }
+    .item-row {
+      display: grid;
+      grid-template-columns: 1fr 80px 36px;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .item-row input {
+      width: 100%;
+      padding: 9px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--gray-light);
+      -webkit-appearance: none;
+    }
+    .item-row input:focus { outline: none; border-color: var(--blue); background: white; }
+    .btn-remove {
+      width: 36px; height: 36px;
+      background: #FEE2E2;
+      border: none;
+      border-radius: 8px;
+      color: var(--red);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-add-item {
+      width: 100%;
+      padding: 10px;
+      background: var(--blue-light);
+      border: 1.5px dashed var(--blue);
+      border-radius: 8px;
+      color: var(--blue);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      font-family: inherit;
+    }
+
+    /* SIGNATURE */
+    #signatureCanvas {
+      width: 100%;
+      height: 160px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: white;
+      touch-action: none;
+      display: block;
+    }
+    .sig-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .btn-clear-sig {
+      flex: 1;
+      padding: 9px;
+      background: #FEE2E2;
+      border: none;
+      border-radius: 8px;
+      color: var(--red);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    /* BUTTONS */
+    .btn-primary {
+      width: 100%;
+      padding: 15px;
+      background: var(--blue);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 12px rgba(26,111,196,0.3);
+      transition: background 0.2s;
+    }
+    .btn-primary:active { background: var(--blue-dark); }
+    .btn-primary:disabled { background: #9CA3AF; box-shadow: none; }
+
+    .btn-secondary {
+      flex: 1;
+      padding: 12px;
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--text);
+      transition: background 0.2s;
+    }
+    .btn-secondary:active { background: var(--gray-light); }
+
+    /* SEND BUTTONS */
+    .send-buttons { display: flex; gap: 10px; margin-top: 12px; }
+    .btn-email {
+      flex: 1; padding: 13px; border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+      background: #1A6FC4; color: white;
+    }
+    .btn-whatsapp {
+      flex: 1; padding: 13px; border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+      background: #25D366; color: white;
+    }
+
+    /* HISTORY */
+    .history-item {
+      background: white;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .history-item:active { transform: scale(0.98); }
+    .history-item-info h3 { font-size: 15px; font-weight: 700; }
+    .history-item-info p { font-size: 13px; color: var(--gray); margin-top: 3px; }
+    .history-item-number {
+      background: var(--blue-light);
+      color: var(--blue);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 90px;
+      right: 50%;
+      transform: translateX(50%);
+      background: #111827;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 999;
+      opacity: 0;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+
+    /* LOADING */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      color: var(--gray);
+      font-size: 14px;
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: flex-end;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 20px 20px 0 0;
+      padding: 20px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-title { font-size: 17px; font-weight: 800; margin-bottom: 16px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--gray);
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state p { font-size: 15px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>📦 תעודות משלוח</h1>
+    <div class="header-note" id="headerNoteNum"></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('new')">תעודה חדשה</div>
+  <div class="tab" onclick="switchTab('history')">היסטוריה</div>
+</div>
+
+<!-- מסך תעודה חדשה -->
+<div class="screen active" id="screen-new">
+
+  <div class="card">
+    <div class="card-title">פרטי תעודה</div>
+    <div class="field">
+      <label>מספר תעודה</label>
+      <div class="note-number-display" id="noteNumberDisplay">טוען...</div>
+    </div>
+    <div class="field">
+      <label>תאריך</label>
+      <input type="date" id="noteDate" />
+    </div>
+    <div class="field">
+      <label>שם לקוח</label>
+      <input type="text" id="customerName" placeholder="הזן שם לקוח" />
+    </div>
+    <div class="field">
+      <label>מספר הזמנת לקוח</label>
+      <input type="text" id="orderNumber" placeholder="הזן מספר הזמנה" />
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">פריטים</div>
+    <div class="items-header">
+      <span>תיאור פריט</span>
+      <span>כמות</span>
+      <span></span>
+    </div>
+    <div id="itemsList"></div>
+    <button class="btn-add-item" onclick="addItem()">+ הוסף פריט</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">חתימה</div>
+    <div class="field">
+      <label>שם החותם</label>
+      <input type="text" id="signerName" placeholder="הזן שם החותם" />
+    </div>
+    <label style="font-size:13px;font-weight:600;color:var(--gray);display:block;margin-bottom:8px;">חתימה דיגיטלית</label>
+    <canvas id="signatureCanvas"></canvas>
+    <div class="sig-actions">
+      <button class="btn-clear-sig" onclick="clearSignature()">🗑 נקה חתימה</button>
+    </div>
+  </div>
+
+  <div class="loading" id="loadingNew">
+    <div class="spinner"></div>
+    שומר תעודה...
+  </div>
+
+  <button class="btn-primary" id="btnSave" onclick="saveNote()">💾 שמור תעודה</button>
+
+  <!-- אחרי שמירה -->
+  <div id="afterSave" style="display:none; margin-top:12px;">
+    <div class="card" style="background:var(--blue-light); border:1.5px solid var(--blue);">
+      <p style="font-size:15px; font-weight:700; color:var(--blue); text-align:center; margin-bottom:12px;">✅ התעודה נשמרה בהצלחה!</p>
+      <div class="send-buttons">
+        <button class="btn-email" onclick="sendEmail()">📧 שלח במייל</button>
+        <button class="btn-whatsapp" onclick="sendWhatsApp()">💬 WhatsApp</button>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button class="btn-secondary" onclick="newNote()">+ תעודה חדשה</button>
+        <button class="btn-secondary" onclick="previewNote()">👁 תצוגה מקדימה</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- מסך היסטוריה -->
+<div class="screen" id="screen-history">
+  <div class="loading" id="loadingHistory">
+    <div class="spinner"></div>
+    טוען תעודות...
+  </div>
+  <div id="historyList"></div>
+</div>
+
+<!-- מודל תצוגה מקדימה -->
+<div class="modal-overlay" id="previewModal">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div class="modal-title" id="previewTitle"></div>
+      <button onclick="closePreview()" style="background:none;border:none;font-size:22px;cursor:pointer;">✕</button>
+    </div>
+    <div id="previewContent"></div>
+    <div class="send-buttons" style="margin-top:16px;">
+      <button class="btn-email" onclick="sendEmailFromPreview()">📧 שלח במייל</button>
+      <button class="btn-whatsapp" onclick="sendWhatsAppFromPreview()">💬 WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzkWpIuCCBBWqqXe1vtJC99bHHPszD_aOsO6QLycXph_ySQLeK9NkIWemg5LxRL1qZ_/exec";
+
+  let currentNote = null;
+  let previewNote = null;
+  let items = [{ description: "", quantity: "" }];
+
+  // =====================
+  // אתחול
+  // =====================
+  window.onload = () => {
+    setTodayDate();
+    renderItems();
+    loadNextNoteNumber();
+    initSignature();
+  };
+
+  function setTodayDate() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    document.getElementById("noteDate").value = `${yyyy}-${mm}-${dd}`;
+  }
+
+  async function loadNextNoteNumber() {
+    try {
+      const res = await fetch(`${SCRIPT_URL}?action=getNextNoteNumber`);
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById("noteNumberDisplay").textContent = `מס' ${data.nextNumber}`;
+        document.getElementById("headerNoteNum").textContent = `תעודה מס' ${data.nextNumber}`;
+      }
+    } catch (e) {
+      document.getElementById("noteNumberDisplay").textContent = "מס' 1001";
+    }
+  }
+
+  // =====================
+  // טאבים
+  // =====================
+  function switchTab(tab) {
+    document.querySelectorAll(".tab").forEach((t, i) => {
+      t.classList.toggle("active", (tab === "new" && i === 0) || (tab === "history" && i === 1));
+    });
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById(`screen-${tab}`).classList.add("active");
+    if (tab === "history") loadHistory();
+  }
+
+  // =====================
+  // פריטים
+  // =====================
+  function renderItems() {
+    const list = document.getElementById("itemsList");
+    list.innerHTML = items.map((item, i) => `
+      <div class="item-row">
+        <input type="text" placeholder="תיאור פריט" value="${item.description}"
+          oninput="items[${i}].description = this.value" />
+        <input type="text" placeholder="כמות" value="${item.quantity}"
+          oninput="items[${i}].quantity = this.value" inputmode="numeric" />
+        <button class="btn-remove" onclick="removeItem(${i})">−</button>
+      </div>
+    `).join("");
+  }
+
+  function addItem() {
+    items.push({ description: "", quantity: "" });
+    renderItems();
+  }
+
+  function removeItem(i) {
+    if (items.length === 1) { showToast("חייב להיות לפחות פריט אחד"); return; }
+    items.splice(i, 1);
+    renderItems();
+  }
+
+  // =====================
+  // חתימה
+  // =====================
+  let canvas, ctx, drawing = false, lastX = 0, lastY = 0;
+
+  function initSignature() {
+    canvas = document.getElementById("signatureCanvas");
+    ctx = canvas.getContext("2d");
+
+    // גודל אמיתי
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * window.devicePixelRatio;
+    canvas.height = rect.height * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+    ctx.strokeStyle = "#1A1A1A";
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    canvas.addEventListener("touchstart", e => { e.preventDefault(); const t = e.touches[0]; const r = canvas.getBoundingClientRect(); lastX = t.clientX - r.left; lastY = t.clientY - r.top; drawing = true; }, { passive: false });
+    canvas.addEventListener("touchmove", e => { e.preventDefault(); if (!drawing) return; const t = e.touches[0]; const r = canvas.getBoundingClientRect(); const x = t.clientX - r.left; const y = t.clientY - r.top; ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke(); lastX = x; lastY = y; }, { passive: false });
+    canvas.addEventListener("touchend", () => drawing = false);
+
+    // עכבר (למחשב)
+    canvas.addEventListener("mousedown", e => { const r = canvas.getBoundingClientRect(); lastX = e.clientX - r.left; lastY = e.clientY - r.top; drawing = true; });
+    canvas.addEventListener("mousemove", e => { if (!drawing) return; const r = canvas.getBoundingClientRect(); const x = e.clientX - r.left; const y = e.clientY - r.top; ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke(); lastX = x; lastY = y; });
+    canvas.addEventListener("mouseup", () => drawing = false);
+  }
+
+  function clearSignature() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+  function getSignatureBase64() {
+    return canvas.toDataURL("image/png");
+  }
+
+  // =====================
+  // שמירת תעודה
+  // =====================
+  async function saveNote() {
+    const customerName = document.getElementById("customerName").value.trim();
+    const orderNumber = document.getElementById("orderNumber").value.trim();
+    const signerName = document.getElementById("signerName").value.trim();
+    const dateVal = document.getElementById("noteDate").value;
+
+    if (!customerName) { showToast("נא להזין שם לקוח"); return; }
+    if (items.every(i => !i.description)) { showToast("נא להזין לפחות פריט אחד"); return; }
+
+    const dateFormatted = dateVal ? dateVal.split("-").reverse().join("/") : getTodayDate();
+
+    const noteData = {
+      action: "createNote",
+      customerName,
+      orderNumber,
+      signerName,
+      date: dateFormatted,
+      items: items.filter(i => i.description),
+      signature: getSignatureBase64()
+    };
+
+    document.getElementById("loadingNew").style.display = "block";
+    document.getElementById("btnSave").disabled = true;
+
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify(noteData)
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        currentNote = { ...noteData, noteNumber: data.noteNumber, date: dateFormatted };
+        document.getElementById("afterSave").style.display = "block";
+        document.getElementById("btnSave").style.display = "none";
+        showToast(`תעודה מס' ${data.noteNumber} נשמרה!`);
+        loadNextNoteNumber();
+      } else {
+        showToast("שגיאה בשמירה, נסה שוב");
+      }
+    } catch (e) {
+      showToast("שגיאת חיבור לשרת");
+    }
+
+    document.getElementById("loadingNew").style.display = "none";
+    document.getElementById("btnSave").disabled = false;
+  }
+
+  function getTodayDate() {
+    const t = new Date();
+    return `${String(t.getDate()).padStart(2,"0")}/${String(t.getMonth()+1).padStart(2,"0")}/${t.getFullYear()}`;
+  }
+
+  // =====================
+  // תעודה חדשה
+  // =====================
+  function newNote() {
+    document.getElementById("customerName").value = "";
+    document.getElementById("orderNumber").value = "";
+    document.getElementById("signerName").value = "";
+    setTodayDate();
+    items = [{ description: "", quantity: "" }];
+    renderItems();
+    clearSignature();
+    document.getElementById("afterSave").style.display = "none";
+    document.getElementById("btnSave").style.display = "block";
+    currentNote = null;
+    window.scrollTo(0, 0);
+  }
+
+  // =====================
+  // שליחה
+  // =====================
+  function buildNoteText(note) {
+    const itemsText = (note.items || []).map(i => `• ${i.description}: ${i.quantity}`).join("\n");
+    return `תעודת משלוח מס' ${note.noteNumber}
+תאריך: ${note.date}
+לקוח: ${note.customerName}
+מספר הזמנה: ${note.orderNumber || "-"}
+
+פריטים:
+${itemsText}
+
+חותם: ${note.signerName || "-"}`;
+  }
+
+  function sendEmail() {
+    if (!currentNote) return;
+    const subject = encodeURIComponent(`תעודת משלוח מס' ${currentNote.noteNumber}`);
+    const body = encodeURIComponent(buildNoteText(currentNote));
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  }
+
+  function sendWhatsApp() {
+    if (!currentNote) return;
+    const text = encodeURIComponent(buildNoteText(currentNote));
+    window.location.href = `https://wa.me/?text=${text}`;
+  }
+
+  function sendEmailFromPreview() { currentNote = previewNote; sendEmail(); }
+  function sendWhatsAppFromPreview() { currentNote = previewNote; sendWhatsApp(); }
+
+  // =====================
+  // תצוגה מקדימה
+  // =====================
+  function previewNote() { showPreview(currentNote); }
+
+  function showPreview(note) {
+    previewNote = note;
+    document.getElementById("previewTitle").textContent = `תעודת משלוח מס' ${note.noteNumber}`;
+    const items = (note.items || []).map(i => `
+      <tr>
+        <td style="padding:8px;border-bottom:1px solid #E5E7EB;">${i.description}</td>
+        <td style="padding:8px;border-bottom:1px solid #E5E7EB;text-align:center;">${i.quantity}</td>
+      </tr>`).join("");
+
+    document.getElementById("previewContent").innerHTML = `
+      <p style="font-size:13px;color:#6B7280;margin-bottom:4px;">תאריך: ${note.date}</p>
+      <p style="font-size:15px;font-weight:700;margin-bottom:12px;">לקוח: ${note.customerName}</p>
+      ${note.orderNumber ? `<p style="font-size:13px;color:#6B7280;margin-bottom:12px;">מספר הזמנה: ${note.orderNumber}</p>` : ""}
+      <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
+        <thead><tr style="background:#F3F4F6;">
+          <th style="padding:8px;text-align:right;font-size:13px;">תיאור פריט</th>
+          <th style="padding:8px;text-align:center;font-size:13px;">כמות</th>
+        </tr></thead>
+        <tbody>${items}</tbody>
+      </table>
+      ${note.signerName ? `<p style="font-size:13px;font-weight:600;">חותם: ${note.signerName}</p>` : ""}
+      ${note.signature ? `<img src="${note.signature}" style="max-width:180px;margin-top:8px;border:1px solid #E5E7EB;border-radius:8px;" />` : ""}
+    `;
+    document.getElementById("previewModal").classList.add("open");
+  }
+
+  function closePreview() {
+    document.getElementById("previewModal").classList.remove("open");
+  }
+
+  // =====================
+  // היסטוריה
+  // =====================
+  async function loadHistory() {
+    document.getElementById("loadingHistory").style.display = "block";
+    document.getElementById("historyList").innerHTML = "";
+
+    try {
+      const res = await fetch(`${SCRIPT_URL}?action=getNotes`);
+      const data = await res.json();
+
+      document.getElementById("loadingHistory").style.display = "none";
+
+      if (!data.success || !data.notes.length) {
+        document.getElementById("historyList").innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📋</div>
+            <p>אין תעודות עדיין</p>
+          </div>`;
+        return;
+      }
+
+      const sorted = [...data.notes].reverse();
+      document.getElementById("historyList").innerHTML = sorted.map(note => `
+        <div class="history-item" onclick='openHistoryNote(${JSON.stringify(note).replace(/'/g, "&#39;")})'>
+          <div class="history-item-info">
+            <h3>${note.customerName || "ללא שם"}</h3>
+            <p>${note.date} · ${(note.items || []).length} פריטים</p>
+          </div>
+          <div class="history-item-number">מס' ${note.noteNumber}</div>
+        </div>
+      `).join("");
+    } catch (e) {
+      document.getElementById("loadingHistory").style.display = "none";
+      document.getElementById("historyList").innerHTML = `
+        <div class="empty-state">
+          <div class="icon">⚠️</div>
+          <p>שגיאה בטעינת התעודות</p>
+        </div>`;
+    }
+  }
+
+  function openHistoryNote(note) { showPreview(note); }
+
+  // =====================
+  // Toast
+  // =====================
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2800);
+  }
+</script>
+</body>
+</html>
